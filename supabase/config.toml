@@ -1,0 +1,4 @@
+project_id = "klotin-desastres-naturales"
+
+[functions.scrape-disasters]
+verify_jwt = false
