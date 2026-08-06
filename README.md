@@ -9,7 +9,7 @@ que publica
 | Módulo | Qué es | Se testea |
 |---|---|---|
 | **`:core`** | Kotlin/JVM puro: modelo del feed, parseo, filtros y frescura | Sin SDK ni emulador, en segundos |
-| **`:app`** | UI en Jetpack Compose | *(pendiente)* |
+| **`:app`** | UI en Jetpack Compose | En CI (necesita el SDK de Android) |
 
 La separación no es ceremonia: **toda la lógica que puede fallar vive en
 `:core`**, que no depende de Android y por eso se compila y se testea en
@@ -17,8 +17,26 @@ cualquier máquina y en CI sin instalar nada. `:app` solo pinta lo que `:core`
 decide.
 
 ```bash
-./gradlew :core:test
+./gradlew :core:test        # no necesita el SDK de Android
+./gradlew :app:assembleDebug  # sí lo necesita
 ```
+
+`org.gradle.configureondemand` está activado justamente para que lo primero
+funcione sin lo segundo: si el build de raíz declarara el plugin de Android,
+Gradle lo resolvería en toda invocación y los tests de `:core` quedarían atados
+al SDK.
+
+## Bajar el APK
+
+Todavía no hay releases firmados. El APK **de debug** lo genera CI en cada push:
+
+1. Entrá a la pestaña *Actions* del repo.
+2. Abrí el run más reciente del workflow **CI**.
+3. Bajá el artifact **`desastres-debug-apk`** (abajo de todo, en *Artifacts*).
+4. En el celular, habilitá "instalar apps de origen desconocido" e instalalo.
+
+Es un APK de debug: sirve para probar, no para publicar. Para Play Store hace
+falta un `release` firmado con un keystore propio.
 
 ## De dónde salen los datos
 
