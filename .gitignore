@@ -3,3 +3,16 @@
 .DS_Store
 node_modules/
 supabase/.temp/
+
+# Gradle / Kotlin
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.kotlin/
+
+# Android
+*.apk
+*.aab
+captures/

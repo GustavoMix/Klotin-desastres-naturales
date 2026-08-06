@@ -1,95 +1,93 @@
-# Klotin - Desastres Naturales (Bolivia)
+# Desastres naturales — app Kotlin
 
-Pipeline que junta datos de desastres naturales en Bolivia desde varias
-fuentes y los guarda en Supabase. El front todavía no existe: el foco de
-esta primera etapa es dejar el cron andando y validado.
+App Android que muestra alertas de desastres naturales a partir de los datos
+que publica
+[cron-desastres-naturales](https://github.com/GustavoMix/cron-desastres-naturales).
 
-## Fuentes (MVP)
+## Estructura
 
-Arrancamos con las 4 fuentes que tienen API pública y no requieren scraping
-de HTML (más fáciles de mantener):
+| Módulo | Qué es | Se testea |
+|---|---|---|
+| **`:core`** | Kotlin/JVM puro: modelo del feed, parseo, filtros y frescura | Sin SDK ni emulador, en segundos |
+| **`:app`** | UI en Jetpack Compose | *(pendiente)* |
 
-| Fuente | Tipo de evento | Necesita API key |
-| --- | --- | --- |
-| [USGS](https://earthquake.usgs.gov/fdsnws/event/1/) | Sismos | No |
-| [GDACS](https://www.gdacs.org/) | Sismos, inundaciones, incendios, volcanes, sequías, ciclones | No |
-| [ReliefWeb](https://reliefweb.int/help/api) | Reportes humanitarios/desastres (texto) | No (solo `appname`) |
-| [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/api/area/) | Focos de calor / incendios (satelital) | Sí, gratis |
+La separación no es ceremonia: **toda la lógica que puede fallar vive en
+`:core`**, que no depende de Android y por eso se compila y se testea en
+cualquier máquina y en CI sin instalar nada. `:app` solo pinta lo que `:core`
+decide.
 
-Pendientes para una siguiente vuelta (necesitan scraping de HTML, más
-frágil, así que los sumamos una vez que el pipeline base esté probado):
-SENAMHI (`senamhi.gob.bo`, alertas en `bolres.senamhi.gob.bo/alertas/`),
-VIDECI/SINAGER (`defensacivil.gob.bo`), Copernicus EMS (activaciones para
-Bolivia), Global Volcanism Program (Smithsonian), Gaceta Oficial (decretos
-de desastre nacional/departamental), entre otras.
-
-## Setup
-
-1. Creá un proyecto en [supabase.com](https://supabase.com) (si todavía no
-   tenés uno).
-2. Instalá la Supabase CLI y logueate:
-   ```bash
-   npm install -g supabase
-   supabase login
-   supabase link --project-ref <tu-project-ref>
-   ```
-3. Corré la migración para crear las tablas:
-   ```bash
-   supabase db push
-   ```
-4. Sacá una `MAP_KEY` gratis de NASA FIRMS en
-   https://firms.modaps.eosdis.nasa.gov/api/area/ (te la mandan por mail).
-5. Definí un secreto random para proteger el endpoint del cron (por ejemplo
-   `openssl rand -hex 32`).
-6. Configurá los secrets de la función:
-   ```bash
-   supabase secrets set FIRMS_MAP_KEY=xxxxx
-   supabase secrets set CRON_SECRET=xxxxx
-   supabase secrets set RELIEFWEB_APPNAME=klotin-desastres-naturales
-   ```
-   (`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` ya están disponibles
-   automáticamente dentro de las Edge Functions, no hace falta setearlas.)
-7. Deployá la función:
-   ```bash
-   supabase functions deploy scrape-disasters
-   ```
-8. Probala a mano antes de programarla:
-   ```bash
-   curl -X POST "https://<tu-project-ref>.supabase.co/functions/v1/scrape-disasters" \
-     -H "x-cron-secret: xxxxx"
-   ```
-   Revisá la tabla `scrape_logs` en el dashboard para ver qué insertó cada
-   fuente (y si alguna tiró error).
-
-## Programar el cron
-
-Supabase corre cron jobs a nivel de Postgres con `pg_cron` + `pg_net`
-(HTTP desde SQL). En el SQL Editor del dashboard:
-
-```sql
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
-
-select cron.schedule(
-  'scrape-disasters-hourly',
-  '0 * * * *', -- cada hora, en punto
-  $$
-  select net.http_post(
-    url := 'https://<tu-project-ref>.supabase.co/functions/v1/scrape-disasters',
-    headers := jsonb_build_object('x-cron-secret', 'xxxxx'),
-    timeout_milliseconds := 30000
-  );
-  $$
-);
+```bash
+./gradlew :core:test
 ```
 
-Alternativa más simple si no querés tocar SQL: Dashboard → Edge Functions →
-`scrape-disasters` → **Cron**, y programarlo ahí directamente (misma idea,
-UI en vez de `pg_cron`).
+## De dónde salen los datos
 
-## Agregar una fuente nueva
+```
+https://raw.githubusercontent.com/GustavoMix/cron-desastres-naturales/claude/scraper-cron-j5z2ny/datos/recientes.json
+```
 
-Cada fuente es un adapter en `supabase/functions/scrape-disasters/adapters/`
-que expone `{ source, fetch() }` y devuelve un array de `NormalizedDisaster`
-(ver `types.ts`). Se suma a la lista `ADAPTERS` en `index.ts` y listo — el
-upsert y el logging son genéricos, no hay que tocar nada más.
+Un scraper corre **una vez por semana** en GitHub Actions (lunes 06:17 UTC),
+junta USGS y GDACS, normaliza todo y publica ese JSON. La app solo lo lee.
+
+⚠️ **Dos cosas antes de que esa URL sirva:**
+
+1. `recientes.json` **todavía no existe** en el repo. Aparece recién en la
+   próxima corrida del scraper; para no esperar al lunes, disparalo a mano desde
+   *Actions → Scraper de desastres → Run workflow*.
+2. La rama por defecto de ese repo es `claude/scraper-cron-j5z2ny`, no `main`
+   (fue la primera que se empujó a un repo vacío). Si se renombra a `main`, hay
+   que actualizar esta URL.
+
+Para producción conviene servirlo por **jsDelivr** en vez de
+`raw.githubusercontent.com`, que no es un CDN y tiene rate limits:
+
+```
+https://cdn.jsdelivr.net/gh/GustavoMix/cron-desastres-naturales@<rama>/datos/recientes.json
+```
+
+Y cachear con ETag desde OkHttp: si el archivo no cambió el servidor responde
+`304` y no se baja nada, que con un scraper semanal es casi siempre.
+
+Tres cosas del contrato que conviene no olvidar:
+
+- **Filtrá por `paises`, no por `pais`.** `pais` es texto crudo de la fuente:
+  USGS pone estados de EE. UU. ahí (`CA`, `Alaska`) y GDACS mete varios países
+  en un solo campo. `paises` son códigos ISO-3166 alfa-2 ya normalizados, y es
+  lista porque un ciclón abarca varios países de verdad.
+- **`magnitud` no es una escala única.** Son hectáreas quemadas en incendios,
+  km/h en ciclones, km² en sequías. Mirá `unidad_magnitud` antes de comparar o
+  de ordenar, y nunca apliques un umbral sísmico a otro tipo de evento.
+- **Colgá los comentarios de `id_agrupado`, no de `id`.** GDACS republica un
+  mismo evento por episodios; `id` los distingue e `id_agrupado` los junta.
+
+El parser ignora las claves que no conoce **a propósito**: el scraper agrega
+campos sin coordinarse con la app, y una app ya publicada sigue leyendo feeds
+más nuevos durante meses. Si eso se saca, un campo nuevo tumba a todos los
+usuarios que no actualizaron.
+
+## Frescura de los datos
+
+Con el cron semanal, los datos pueden tener **hasta 7 días**. Esto no es una app
+de tiempo real, y la interfaz tiene que decirlo.
+
+`EvaluadorDeFrescura` compara la marca `generado` del feed contra el reloj y
+devuelve `Fresca` / `Vieja` / `Crítica` / `Desconocida`. Cuando `requiereAviso`
+es `true`, la pantalla **debe** advertirlo: mostrar información vieja como si
+fuera actual, en una app de desastres, es peor que no mostrar nada.
+
+Los umbrales están atados a la cadencia del cron. Si el scraper cambia de
+cadencia, hay que moverlos en el constructor de `EvaluadorDeFrescura`.
+
+## `supabase/` — pipeline anterior, sin uso hoy
+
+El directorio `supabase/` tiene un pipeline en TypeScript que scrapea las mismas
+fuentes (más ReliefWeb y NASA FIRMS) y guarda en Postgres, **scopeado solo a
+Bolivia**. Quedó fuera del camino cuando la app pasó a leer el JSON del scraper
+en Python, que es global.
+
+Se conserva como referencia por dos motivos: los adapters de **ReliefWeb** y
+**NASA FIRMS**, que el scraper en Python todavía no tiene, y el esquema con RLS,
+que va a servir cuando se sumen los comentarios de usuarios — porque eso sí
+necesita una base de datos, no un JSON estático.
+
+No está desplegado ni tiene CI.
