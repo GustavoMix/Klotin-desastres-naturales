@@ -1,0 +1,43 @@
+package com.gustavomix.desastres.ui
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.gustavomix.desastres.data.Evento
+import com.gustavomix.desastres.data.RepositorioEventos
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+sealed interface EstadoEventos {
+    data object Cargando : EstadoEventos
+    data class Error(val mensaje: String) : EstadoEventos
+    data class Listo(val generado: String, val eventos: List<Evento>) : EstadoEventos
+}
+
+class EventosViewModel(
+    private val repositorio: RepositorioEventos = RepositorioEventos(),
+) : ViewModel() {
+
+    private val _estado = MutableStateFlow<EstadoEventos>(EstadoEventos.Cargando)
+    val estado: StateFlow<EstadoEventos> = _estado.asStateFlow()
+
+    init {
+        cargar()
+    }
+
+    fun cargar() {
+        _estado.value = EstadoEventos.Cargando
+        viewModelScope.launch {
+            _estado.value = try {
+                val feed = repositorio.obtenerFeed()
+                EstadoEventos.Listo(feed.generado, feed.eventos)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                EstadoEventos.Error(e.message ?: "Error desconocido")
+            }
+        }
+    }
+}
