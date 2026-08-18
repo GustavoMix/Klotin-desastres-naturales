@@ -147,8 +147,8 @@ private fun MapaAbstracto(eventos: List<Evento>, modifier: Modifier = Modifier) 
                 eventos.forEach { evento ->
                     val lat = evento.latitud ?: return@forEach
                     val lon = evento.longitud ?: return@forEach
-                    val x = ((lon + 180) / 360f) * size.width
-                    val y = ((90 - lat) / 180f) * size.height
+                    val x = (((lon + 180) / 360.0) * size.width).toFloat()
+                    val y = (((90 - lat) / 180.0) * size.height).toFloat()
                     drawCircle(
                         color = colorDeSeveridad(severidadDe(evento)),
                         radius = 6f,
