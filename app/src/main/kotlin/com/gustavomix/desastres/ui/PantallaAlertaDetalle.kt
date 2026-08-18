@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.etiquetaTipo
+import com.gustavomix.desastres.data.resumenClaro
 import com.gustavomix.desastres.data.severidadDe
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,26 +91,15 @@ fun PantallaAlertaDetalle(evento: Evento?, alVolver: () -> Unit, modifier: Modif
             }
 
             Column(modifier = Modifier.padding(20.dp)) {
-                Text(evento.titulo, style = MaterialTheme.typography.headlineSmall)
+                Text(resumenClaro(evento), style = MaterialTheme.typography.headlineSmall)
                 evento.lugar?.let {
                     Text(it, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-                FilaDato("Tipo", etiquetaTipo(evento.tipo))
-                FilaDato("Fuente", evento.fuente.uppercase())
                 evento.fechaEvento?.let { FilaDato("Fecha", it) }
-                evento.magnitud?.let {
-                    FilaDato("Magnitud", "$it ${evento.unidadMagnitud.orEmpty()}")
-                }
-
-                Text(
-                    "Esta información viene directo de la fuente original (${evento.fuente}); " +
-                        "este evento no tiene una descripción propia todavía.",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 16.dp),
-                )
+                FilaDato("Fuente de los datos", evento.fuente.uppercase())
 
                 evento.url?.let { url ->
                     Button(onClick = {

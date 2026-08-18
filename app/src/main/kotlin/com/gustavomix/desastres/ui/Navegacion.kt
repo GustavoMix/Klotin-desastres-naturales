@@ -36,9 +36,8 @@ fun Navegacion(viewModel: EventosViewModel) {
                         selected = rutaActual?.hierarchy?.any { it.route == destino.ruta } == true,
                         onClick = {
                             navController.navigate(destino.ruta) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = { Icon(destino.icono, contentDescription = destino.etiqueta) },

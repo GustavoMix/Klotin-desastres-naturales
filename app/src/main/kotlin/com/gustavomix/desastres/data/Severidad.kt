@@ -35,3 +35,13 @@ fun etiquetaTipo(tipo: String): String = when (tipo) {
     "volcan" -> "Volcán"
     else -> tipo.replaceFirstChar { it.uppercase() }
 }
+
+/** Frase corta y clara: "Terremoto · Magnitud 3.1" en vez del título técnico crudo de la fuente. */
+fun resumenClaro(evento: Evento): String {
+    val tipo = etiquetaTipo(evento.tipo)
+    val magnitud = evento.magnitud ?: return tipo
+    return "$tipo · Magnitud ${formatearMagnitud(magnitud)}"
+}
+
+private fun formatearMagnitud(valor: Double): String =
+    "%.1f".format(java.util.Locale.US, valor)
