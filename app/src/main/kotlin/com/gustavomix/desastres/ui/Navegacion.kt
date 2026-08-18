@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.NavType
 
 @Composable
 fun Navegacion(viewModel: EventosViewModel) {
@@ -61,13 +62,24 @@ fun Navegacion(viewModel: EventosViewModel) {
                 PantallaInicio(
                     viewModel = viewModel,
                     alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
-                    alVerTodasLasAlertas = { navController.navigate(Ruta.Alertas.ruta) },
+                    alVerTodasLasAlertas = { navController.navigate(Ruta.Alertas.BASE) },
+                    alVerTipo = { tipo -> navController.navigate(Ruta.Alertas.conTipo(tipo)) },
                 )
             }
-            composable(Ruta.Alertas.ruta) {
+            composable(
+                route = Ruta.Alertas.ruta,
+                arguments = listOf(
+                    navArgument("tipo") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { entrada ->
                 PantallaAlertas(
                     viewModel = viewModel,
                     alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
+                    tipoInicial = entrada.arguments?.getString("tipo"),
                 )
             }
             composable(Ruta.Mapa.ruta) {

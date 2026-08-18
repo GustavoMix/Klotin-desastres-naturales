@@ -62,9 +62,9 @@ private fun ContenidoMapa(eventos: List<Evento>, modifier: Modifier = Modifier) 
 
     Column(modifier = modifier.fillMaxSize().padding(12.dp)) {
         Text(
-            "Mapa de eventos (beta) — ubicación aproximada, sin capas geográficas todavía",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(bottom = 8.dp),
+            "Mapa",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 12.dp),
         )
 
         LazyRow(modifier = Modifier.padding(bottom = 12.dp)) {

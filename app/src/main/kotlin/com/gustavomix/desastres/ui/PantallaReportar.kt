@@ -53,12 +53,10 @@ fun PantallaReportar(modifier: Modifier = Modifier) {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Text("Reportar incidente", style = MaterialTheme.typography.titleLarge)
             Text(
-                "Esta pantalla todavía no envía nada a ningún lado — no hay backend de reportes " +
-                    "conectado. Es solo la interfaz.",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp, bottom = 20.dp),
+                "Reportar incidente",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 20.dp),
             )
 
             ExposedDropdownMenuBox(expanded = tipoExpandido, onExpandedChange = { tipoExpandido = it }) {
@@ -103,7 +101,7 @@ fun PantallaReportar(modifier: Modifier = Modifier) {
             Button(
                 onClick = {
                     scope.launch {
-                        snackbarHostState.showSnackbar("Todavía no hay backend para guardar reportes")
+                        snackbarHostState.showSnackbar("Los reportes todavía no se pueden enviar")
                     }
                 },
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),

@@ -44,7 +44,7 @@ fun PantallaMas(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-            "Sin reportes todavía (esta sección no tiene backend aún).",
+            "Sin reportes todavía.",
             style = MaterialTheme.typography.bodySmall,
         )
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

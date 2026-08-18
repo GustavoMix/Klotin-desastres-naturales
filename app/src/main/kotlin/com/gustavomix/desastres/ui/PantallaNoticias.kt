@@ -33,9 +33,8 @@ fun PantallaNoticias(
 
     Column(modifier = modifier.fillMaxSize()) {
         Text(
-            "Esta sección muestra los eventos del feed como si fueran noticias — el cron " +
-                "todavía no trae una fuente de noticias real.",
-            style = MaterialTheme.typography.bodySmall,
+            "Noticias",
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(12.dp),
         )
 

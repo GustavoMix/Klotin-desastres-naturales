@@ -23,15 +23,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.gustavomix.desastres.data.Evento
+import com.gustavomix.desastres.data.Severidad
 import com.gustavomix.desastres.data.etiquetaTipo
 import com.gustavomix.desastres.data.severidadDe
-import com.gustavomix.desastres.data.Severidad
 
 @Composable
 fun PantallaInicio(
     viewModel: EventosViewModel,
     alVerAlerta: (String) -> Unit,
     alVerTodasLasAlertas: () -> Unit,
+    alVerTipo: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -43,7 +44,7 @@ fun PantallaInicio(
         is EstadoEventos.Error -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No se pudo cargar: ${actual.mensaje}")
         }
-        is EstadoEventos.Listo -> ContenidoInicio(actual.eventos, alVerAlerta, alVerTodasLasAlertas, modifier)
+        is EstadoEventos.Listo -> ContenidoInicio(actual.eventos, alVerAlerta, alVerTodasLasAlertas, alVerTipo, modifier)
     }
 }
 
@@ -52,6 +53,7 @@ private fun ContenidoInicio(
     eventos: List<Evento>,
     alVerAlerta: (String) -> Unit,
     alVerTodasLasAlertas: () -> Unit,
+    alVerTipo: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val criticos = eventos.filter { severidadDe(it) in setOf(Severidad.ROJA, Severidad.NARANJA) }
@@ -60,19 +62,11 @@ private fun ContenidoInicio(
 
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
         item {
-            Column {
-                Text("Desastres", style = MaterialTheme.typography.headlineMedium)
-                Text(
-                    "Naturales",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = AzulAcento,
-                )
-                Text(
-                    "Información que puede salvar vidas.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                )
-            }
+            Text(
+                "Desastres Naturales",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
         }
 
         if (criticos.isNotEmpty()) {
@@ -86,12 +80,17 @@ private fun ContenidoInicio(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            "ALERTAS ACTIVAS  ${criticos.size}",
+                            "${criticos.size} ALERTA${if (criticos.size == 1) "" else "S"} ACTIVA${if (criticos.size == 1) "" else "S"}",
                             style = MaterialTheme.typography.labelLarge,
                         )
                         Text(
                             criticos.first().titulo,
                             style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                        Text(
+                            "Toca para ver todas",
+                            style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(top = 4.dp),
                         )
                     }
@@ -101,19 +100,19 @@ private fun ContenidoInicio(
 
         item {
             Text(
-                "Tipos de desastres",
+                "Filtrar por tipo",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
         }
         item {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 tipos.forEach { tipo ->
                     Card(
-                        modifier = Modifier.clickable(onClick = alVerTodasLasAlertas),
+                        modifier = Modifier.clickable { alVerTipo(tipo) },
                         colors = CardDefaults.cardColors(containerColor = SuperficieOscura),
                     ) {
                         Text(
@@ -130,6 +129,7 @@ private fun ContenidoInicio(
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("Eventos recientes", style = MaterialTheme.typography.titleMedium)
                 Text(
