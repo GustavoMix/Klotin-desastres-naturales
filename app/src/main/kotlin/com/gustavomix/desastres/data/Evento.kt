@@ -11,6 +11,8 @@ data class Evento(
     val unidadMagnitud: String?,
     val nivelAlerta: String?,
     val url: String?,
+    val latitud: Double?,
+    val longitud: Double?,
 )
 
 data class Feed(

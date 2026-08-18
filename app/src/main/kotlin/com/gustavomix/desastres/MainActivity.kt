@@ -5,12 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
 import com.gustavomix.desastres.ui.EventosViewModel
-import com.gustavomix.desastres.ui.PantallaEventos
+import com.gustavomix.desastres.ui.Navegacion
+import com.gustavomix.desastres.ui.TemaDesastres
 
 class MainActivity : ComponentActivity() {
 
@@ -21,10 +18,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MaterialTheme {
-                Scaffold { padding ->
-                    PantallaEventos(modifier = Modifier.padding(padding), viewModel = viewModel)
-                }
+            TemaDesastres {
+                Navegacion(viewModel = viewModel)
             }
         }
     }

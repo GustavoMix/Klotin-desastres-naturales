@@ -46,6 +46,8 @@ class RepositorioEventos(
         unidadMagnitud = obj.optStringOrNull("unidad_magnitud"),
         nivelAlerta = obj.optStringOrNull("nivel_alerta"),
         url = obj.optStringOrNull("url"),
+        latitud = if (obj.has("latitud") && !obj.isNull("latitud")) obj.optDouble("latitud") else null,
+        longitud = if (obj.has("longitud") && !obj.isNull("longitud")) obj.optDouble("longitud") else null,
     )
 }
 

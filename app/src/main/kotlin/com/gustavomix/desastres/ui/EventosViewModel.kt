@@ -40,4 +40,7 @@ class EventosViewModel(
             }
         }
     }
+
+    fun obtenerPorId(id: String): Evento? =
+        (estado.value as? EstadoEventos.Listo)?.eventos?.find { it.id == id }
 }
