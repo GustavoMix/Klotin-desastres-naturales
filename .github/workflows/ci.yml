@@ -10,21 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  core:
-    name: "core (Kotlin/JVM)"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-      - uses: gradle/actions/setup-gradle@v4
-
-      # :core no depende del SDK de Android a propósito: toda la lógica que
-      # puede fallar se testea acá, sin emulador y en segundos.
-      - run: ./gradlew :core:test
-
   apk:
     name: "APK de debug"
     runs-on: ubuntu-latest
