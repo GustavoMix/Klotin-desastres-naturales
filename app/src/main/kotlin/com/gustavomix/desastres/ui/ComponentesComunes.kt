@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.Severidad
+import com.gustavomix.desastres.data.fechaLegible
+import com.gustavomix.desastres.data.lugarLegible
 import com.gustavomix.desastres.data.resumenClaro
 import com.gustavomix.desastres.data.severidadDe
 
@@ -76,7 +78,10 @@ fun TarjetaEvento(evento: Evento, onClick: () -> Unit, modifier: Modifier = Modi
             )
             Column(modifier = Modifier.padding(start = 12.dp).fillMaxWidth()) {
                 Text(resumenClaro(evento), style = MaterialTheme.typography.titleMedium)
-                evento.lugar?.let {
+                lugarLegible(evento.lugar)?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp))
+                }
+                fechaLegible(evento.fechaEvento)?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp))
                 }
                 InsigniaSeveridad(severidad, modifier = Modifier.padding(top = 6.dp))

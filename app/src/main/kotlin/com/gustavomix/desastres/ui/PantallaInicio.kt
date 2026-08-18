@@ -24,7 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.Severidad
-import com.gustavomix.desastres.data.etiquetaTipo
+import com.gustavomix.desastres.data.fechaLegible
+import com.gustavomix.desastres.data.resumenClaro
 import com.gustavomix.desastres.data.severidadDe
 
 @Composable
@@ -32,7 +33,6 @@ fun PantallaInicio(
     viewModel: EventosViewModel,
     alVerAlerta: (String) -> Unit,
     alVerTodasLasAlertas: () -> Unit,
-    alVerTipo: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -44,7 +44,7 @@ fun PantallaInicio(
         is EstadoEventos.Error -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No se pudo cargar: ${actual.mensaje}")
         }
-        is EstadoEventos.Listo -> ContenidoInicio(actual.eventos, alVerAlerta, alVerTodasLasAlertas, alVerTipo, modifier)
+        is EstadoEventos.Listo -> ContenidoInicio(actual.eventos, alVerAlerta, alVerTodasLasAlertas, modifier)
     }
 }
 
@@ -53,12 +53,12 @@ private fun ContenidoInicio(
     eventos: List<Evento>,
     alVerAlerta: (String) -> Unit,
     alVerTodasLasAlertas: () -> Unit,
-    alVerTipo: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val criticos = eventos.filter { severidadDe(it) in setOf(Severidad.ROJA, Severidad.NARANJA) }
+    val criticos = eventos
+        .filter { severidadDe(it) in setOf(Severidad.ROJA, Severidad.NARANJA) }
+        .sortedByDescending { it.fechaEvento ?: "" }
     val recientes = eventos.take(8)
-    val tipos = eventos.map { it.tipo }.distinct().take(6)
 
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
         item {
@@ -71,6 +71,7 @@ private fun ContenidoInicio(
 
         if (criticos.isNotEmpty()) {
             item {
+                val masReciente = criticos.first()
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -84,41 +85,17 @@ private fun ContenidoInicio(
                             style = MaterialTheme.typography.labelLarge,
                         )
                         Text(
-                            criticos.first().titulo,
+                            resumenClaro(masReciente),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(top = 4.dp),
                         )
+                        fechaLegible(masReciente.fechaEvento)?.let {
+                            Text(it, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
+                        }
                         Text(
                             "Toca para ver todas",
                             style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            Text(
-                "Filtrar por tipo",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
-        }
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                tipos.forEach { tipo ->
-                    Card(
-                        modifier = Modifier.clickable { alVerTipo(tipo) },
-                        colors = CardDefaults.cardColors(containerColor = SuperficieOscura),
-                    ) {
-                        Text(
-                            etiquetaTipo(tipo),
-                            style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(top = 6.dp),
                         )
                     }
                 }

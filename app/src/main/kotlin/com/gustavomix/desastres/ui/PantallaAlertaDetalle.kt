@@ -28,6 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.etiquetaTipo
+import com.gustavomix.desastres.data.fechaLegible
+import com.gustavomix.desastres.data.lugarLegible
 import com.gustavomix.desastres.data.resumenClaro
 import com.gustavomix.desastres.data.severidadDe
 
@@ -92,13 +94,13 @@ fun PantallaAlertaDetalle(evento: Evento?, alVolver: () -> Unit, modifier: Modif
 
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(resumenClaro(evento), style = MaterialTheme.typography.headlineSmall)
-                evento.lugar?.let {
+                lugarLegible(evento.lugar)?.let {
                     Text(it, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-                evento.fechaEvento?.let { FilaDato("Fecha", it) }
+                fechaLegible(evento.fechaEvento)?.let { FilaDato("Cuándo ocurrió", it) }
                 FilaDato("Fuente de los datos", evento.fuente.uppercase())
 
                 evento.url?.let { url ->

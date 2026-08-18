@@ -10,10 +10,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Ruta(val ruta: String) {
     data object Inicio : Ruta("inicio")
-    data object Alertas : Ruta("alertas?tipo={tipo}") {
-        const val BASE = "alertas"
-        fun conTipo(tipo: String) = "alertas?tipo=$tipo"
-    }
+    data object Alertas : Ruta("alertas")
     data object Mapa : Ruta("mapa")
     data object Noticias : Ruta("noticias")
     data object Recursos : Ruta("recursos")

@@ -36,12 +36,11 @@ private val PESTANIAS = listOf("Todas", "Activas", "Historial")
 fun PantallaAlertas(
     viewModel: EventosViewModel,
     alVerAlerta: (String) -> Unit,
-    tipoInicial: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val estado by viewModel.estado.collectAsState()
     var pestaniaSeleccionada by remember { mutableIntStateOf(0) }
-    var tipoSeleccionado by remember { mutableStateOf(tipoInicial) }
+    var tipoSeleccionado by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
         TabRow(selectedTabIndex = pestaniaSeleccionada) {

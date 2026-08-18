@@ -104,45 +104,71 @@ private fun ContenidoMapa(eventos: List<Evento>, modifier: Modifier = Modifier) 
     }
 }
 
+private const val COLOR_GRILLA = 0xFF2A3340
+
 @Composable
 private fun MapaAbstracto(eventos: List<Evento>, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(12.dp))
-            .background(SuperficieOscura),
-    ) {
-        if (eventos.isEmpty()) {
-            Text(
-                "Sin coordenadas para este filtro",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.align(Alignment.Center),
-            )
-            return@Box
-        }
+    Column(modifier = modifier) {
+        Text(
+            "Mapa mundial",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(2f)
+                .clip(RoundedCornerShape(12.dp))
+                .background(SuperficieOscura),
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val colorGrilla = androidx.compose.ui.graphics.Color(COLOR_GRILLA)
 
-        val latitudes = eventos.mapNotNull { it.latitud }
-        val longitudes = eventos.mapNotNull { it.longitud }
-        val latMin = latitudes.min()
-        val latMax = latitudes.max()
-        val lonMin = longitudes.min()
-        val lonMax = longitudes.max()
-        val rangoLat = (latMax - latMin).takeIf { it > 0.0 } ?: 1.0
-        val rangoLon = (lonMax - lonMin).takeIf { it > 0.0 } ?: 1.0
+                // Grilla cada 30°, con el ecuador y el meridiano de Greenwich más marcados.
+                for (lon in -180..180 step 30) {
+                    val x = ((lon + 180) / 360f) * size.width
+                    drawLine(
+                        color = colorGrilla,
+                        start = androidx.compose.ui.geometry.Offset(x, 0f),
+                        end = androidx.compose.ui.geometry.Offset(x, size.height),
+                        strokeWidth = if (lon == 0) 2f else 1f,
+                    )
+                }
+                for (lat in -90..90 step 30) {
+                    val y = ((90 - lat) / 180f) * size.height
+                    drawLine(
+                        color = colorGrilla,
+                        start = androidx.compose.ui.geometry.Offset(0f, y),
+                        end = androidx.compose.ui.geometry.Offset(size.width, y),
+                        strokeWidth = if (lat == 0) 2f else 1f,
+                    )
+                }
 
-        Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            eventos.forEach { evento ->
-                val lat = evento.latitud ?: return@forEach
-                val lon = evento.longitud ?: return@forEach
-                val x = ((lon - lonMin) / rangoLon).toFloat() * size.width
-                // Latitud crece hacia el norte; Y crece hacia abajo en el canvas.
-                val y = (1f - ((lat - latMin) / rangoLat).toFloat()) * size.height
-                drawCircle(
-                    color = colorDeSeveridad(severidadDe(evento)),
-                    radius = 6f,
-                    center = androidx.compose.ui.geometry.Offset(x, y),
+                eventos.forEach { evento ->
+                    val lat = evento.latitud ?: return@forEach
+                    val lon = evento.longitud ?: return@forEach
+                    val x = ((lon + 180) / 360f) * size.width
+                    val y = ((90 - lat) / 180f) * size.height
+                    drawCircle(
+                        color = colorDeSeveridad(severidadDe(evento)),
+                        radius = 6f,
+                        center = androidx.compose.ui.geometry.Offset(x, y),
+                    )
+                }
+            }
+
+            if (eventos.isEmpty()) {
+                Text(
+                    "Sin coordenadas para este filtro",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.Center),
                 )
             }
         }
+        Text(
+            "Grilla de referencia (paralelos y meridianos cada 30°) — todavía sin costas ni fronteras dibujadas.",
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }
