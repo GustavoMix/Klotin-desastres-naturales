@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +30,7 @@ import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.etiquetaTipo
 import com.gustavomix.desastres.data.severidadDe
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaAlertaDetalle(evento: Evento?, alVolver: () -> Unit, modifier: Modifier = Modifier) {
     val contexto = LocalContext.current
