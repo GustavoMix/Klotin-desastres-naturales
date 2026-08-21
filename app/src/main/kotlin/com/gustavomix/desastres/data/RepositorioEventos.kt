@@ -8,8 +8,7 @@ import org.json.JSONObject
 import java.io.IOException
 
 private const val URL_FEED =
-    "https://raw.githubusercontent.com/GustavoMix/cron-desastres-naturales/" +
-        "claude/scraper-cron-j5z2ny/datos/recientes.json"
+    "https://cdn.jsdelivr.net/gh/GustavoMix/cron-desastres-naturales@main/datos/recientes.json"
 
 class RepositorioEventos(
     private val cliente: OkHttpClient = OkHttpClient(),

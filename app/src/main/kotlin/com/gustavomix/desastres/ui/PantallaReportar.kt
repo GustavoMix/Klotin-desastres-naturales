@@ -25,7 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.gustavomix.desastres.data.RepositorioReportes
 import com.gustavomix.desastres.data.etiquetaTipo
 import kotlinx.coroutines.launch
 
@@ -33,7 +35,9 @@ private val TIPOS_REPORTE = listOf("sismo", "incendio", "inundacion", "derrumbe"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaReportar(modifier: Modifier = Modifier) {
+fun PantallaReportar(modifier: Modifier = Modifier, alGuardar: () -> Unit = {}) {
+    val contexto = LocalContext.current
+    val repositorio = remember { RepositorioReportes(contexto) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -56,7 +60,12 @@ fun PantallaReportar(modifier: Modifier = Modifier) {
             Text(
                 "Reportar incidente",
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 20.dp),
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+            Text(
+                "El reporte se guarda solo en este teléfono, todavía no se envía a nadie.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 16.dp),
             )
 
             ExposedDropdownMenuBox(expanded = tipoExpandido, onExpandedChange = { tipoExpandido = it }) {
@@ -100,13 +109,28 @@ fun PantallaReportar(modifier: Modifier = Modifier) {
 
             Button(
                 onClick = {
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Los reportes todavía no se pueden enviar")
+                    if (ubicacion.isBlank() || descripcion.isBlank()) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Completá ubicación y descripción antes de guardar")
+                        }
+                        return@Button
                     }
+                    repositorio.guardar(
+                        tipo = tipoSeleccionado,
+                        ubicacion = ubicacion.trim(),
+                        descripcion = descripcion.trim(),
+                    )
+                    ubicacion = ""
+                    descripcion = ""
+                    tipoSeleccionado = TIPOS_REPORTE.first()
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Reporte guardado en \"Más > Mis reportes\"")
+                    }
+                    alGuardar()
                 },
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             ) {
-                Text("Enviar reporte")
+                Text("Guardar reporte")
             }
         }
     }

@@ -82,10 +82,10 @@ fun Navegacion(viewModel: EventosViewModel) {
                 PantallaRecursos()
             }
             composable(Ruta.Reportar.ruta) {
-                PantallaReportar()
+                PantallaReportar(alGuardar = { navController.popBackStack() })
             }
-            composable(Ruta.Mas.ruta) {
-                PantallaMas()
+            composable(Ruta.Mas.ruta) { entrada ->
+                PantallaMas(senialRecarga = entrada.id)
             }
             composable(
                 route = Ruta.AlertaDetalle.ruta,
