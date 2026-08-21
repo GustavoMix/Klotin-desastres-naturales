@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -29,7 +30,7 @@ fun Navegacion(viewModel: EventosViewModel) {
             val backStackEntry by navController.currentBackStackEntryAsState()
             val rutaActual = backStackEntry?.destination
 
-            NavigationBar {
+            NavigationBar(containerColor = SuperficieOscura) {
                 destinosBarraInferior.forEach { destino ->
                     NavigationBarItem(
                         selected = rutaActual?.hierarchy?.any { it.route == destino.ruta } == true,
@@ -60,17 +61,30 @@ fun Navegacion(viewModel: EventosViewModel) {
                 PantallaInicio(
                     viewModel = viewModel,
                     alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
-                    alVerTodasLasAlertas = { navController.navigate(Ruta.Alertas.ruta) },
+                    alVerTodasLasAlertas = { navController.navigate(Ruta.Alertas.con(0)) },
+                    alVerAlertasFuertes = { navController.navigate(Ruta.Alertas.con(1)) },
                 )
             }
-            composable(Ruta.Alertas.ruta) {
+            composable(
+                route = Ruta.Alertas.ruta,
+                arguments = listOf(
+                    navArgument("pestania") {
+                        type = NavType.IntType
+                        defaultValue = 0
+                    },
+                ),
+            ) { entrada ->
                 PantallaAlertas(
                     viewModel = viewModel,
                     alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
+                    pestaniaInicial = entrada.arguments?.getInt("pestania") ?: 0,
                 )
             }
             composable(Ruta.Mapa.ruta) {
-                PantallaMapa(viewModel = viewModel)
+                PantallaMapa(
+                    viewModel = viewModel,
+                    alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
+                )
             }
             composable(Ruta.Noticias.ruta) {
                 PantallaNoticias(
@@ -82,10 +96,10 @@ fun Navegacion(viewModel: EventosViewModel) {
                 PantallaRecursos()
             }
             composable(Ruta.Reportar.ruta) {
-                PantallaReportar()
+                PantallaReportar(alGuardar = { navController.popBackStack() })
             }
-            composable(Ruta.Mas.ruta) {
-                PantallaMas()
+            composable(Ruta.Mas.ruta) { entrada ->
+                PantallaMas(senialRecarga = entrada.id)
             }
             composable(
                 route = Ruta.AlertaDetalle.ruta,

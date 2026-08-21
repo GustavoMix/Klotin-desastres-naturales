@@ -1,5 +1,7 @@
 package com.gustavomix.desastres.data
 
+import java.util.Locale
+
 enum class Severidad { ROJA, NARANJA, AMARILLA, VERDE }
 
 fun severidadDe(evento: Evento): Severidad {
@@ -25,6 +27,14 @@ fun severidadDe(evento: Evento): Severidad {
     }
 }
 
+/** Qué tan grave es, en palabras que se entienden sin saber de escalas. */
+fun explicacionSeveridad(severidad: Severidad): String = when (severidad) {
+    Severidad.ROJA -> "Puede causar daños graves"
+    Severidad.NARANJA -> "Se sintió fuerte, puede causar daños"
+    Severidad.AMARILLA -> "Moderado, poco probable que cause daños"
+    Severidad.VERDE -> "Leve, casi no se siente"
+}
+
 fun etiquetaTipo(tipo: String): String = when (tipo) {
     "sismo" -> "Terremoto"
     "incendio" -> "Incendio forestal"
@@ -33,15 +43,24 @@ fun etiquetaTipo(tipo: String): String = when (tipo) {
     "ciclon" -> "Ciclón"
     "derrumbe" -> "Derrumbe"
     "volcan" -> "Volcán"
+    "otro" -> "Otro evento"
     else -> tipo.replaceFirstChar { it.uppercase() }
 }
 
-/** Frase corta y clara: "Terremoto · Magnitud 3.1" en vez del título técnico crudo de la fuente. */
-fun resumenClaro(evento: Evento): String {
-    val tipo = etiquetaTipo(evento.tipo)
-    val magnitud = evento.magnitud ?: return tipo
-    return "$tipo · Magnitud ${formatearMagnitud(magnitud)}"
+/** "Magnitud 5.2" para sismos, "1.200 ha" para el resto. Null si la fuente no la manda. */
+fun magnitudTexto(evento: Evento): String? {
+    val magnitud = evento.magnitud ?: return null
+    if (evento.tipo == "sismo") return "Magnitud ${formatearNumero(magnitud)}"
+    val unidad = evento.unidadMagnitud
+    return if (unidad.isNullOrBlank()) formatearNumero(magnitud) else "${formatearNumero(magnitud)} $unidad"
 }
 
-private fun formatearMagnitud(valor: Double): String =
-    "%.1f".format(java.util.Locale.US, valor)
+/** Versión corta para la esquina de la tarjeta: "M 5.2". */
+fun magnitudCorta(evento: Evento): String? {
+    val magnitud = evento.magnitud ?: return null
+    return if (evento.tipo == "sismo") "M ${formatearNumero(magnitud)}" else formatearNumero(magnitud)
+}
+
+private fun formatearNumero(valor: Double): String =
+    if (valor == valor.toLong().toDouble()) valor.toLong().toString()
+    else "%.1f".format(Locale.US, valor)

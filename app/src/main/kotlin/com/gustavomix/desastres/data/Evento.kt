@@ -6,6 +6,8 @@ data class Evento(
     val tipo: String,
     val titulo: String,
     val lugar: String?,
+    val pais: String?,
+    val paises: List<String>,
     val fechaEvento: String?,
     val magnitud: Double?,
     val unidadMagnitud: String?,
@@ -13,6 +15,7 @@ data class Evento(
     val url: String?,
     val latitud: Double?,
     val longitud: Double?,
+    val profundidadKm: Double?,
 )
 
 data class Feed(

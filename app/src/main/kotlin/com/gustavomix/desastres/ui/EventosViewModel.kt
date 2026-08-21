@@ -32,7 +32,9 @@ class EventosViewModel(
         viewModelScope.launch {
             _estado.value = try {
                 val feed = repositorio.obtenerFeed()
-                EstadoEventos.Listo(feed.generado, feed.eventos)
+                // Del más nuevo al más viejo: las fechas ISO se ordenan igual como texto.
+                val ordenados = feed.eventos.sortedByDescending { it.fechaEvento ?: "" }
+                EstadoEventos.Listo(feed.generado, ordenados)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

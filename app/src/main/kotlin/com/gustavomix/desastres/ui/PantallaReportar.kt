@@ -25,7 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.gustavomix.desastres.data.RepositorioReportes
 import com.gustavomix.desastres.data.etiquetaTipo
 import kotlinx.coroutines.launch
 
@@ -33,7 +36,9 @@ private val TIPOS_REPORTE = listOf("sismo", "incendio", "inundacion", "derrumbe"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaReportar(modifier: Modifier = Modifier) {
+fun PantallaReportar(modifier: Modifier = Modifier, alGuardar: () -> Unit = {}) {
+    val contexto = LocalContext.current
+    val repositorio = remember { RepositorioReportes(contexto) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -50,12 +55,21 @@ fun PantallaReportar(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
         ) {
             Text(
-                "Reportar incidente",
-                style = MaterialTheme.typography.titleLarge,
+                "Anotar un incidente",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = TextoPrimario,
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+            Text(
+                "Se guarda solo en tu teléfono, para que lo tengas anotado. " +
+                    "Ante una emergencia real, llamá al 110, 118 o 119.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextoSecundario,
                 modifier = Modifier.padding(bottom = 20.dp),
             )
 
@@ -100,13 +114,28 @@ fun PantallaReportar(modifier: Modifier = Modifier) {
 
             Button(
                 onClick = {
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Los reportes todavía no se pueden enviar")
+                    if (ubicacion.isBlank() || descripcion.isBlank()) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Completá ubicación y descripción antes de guardar")
+                        }
+                        return@Button
                     }
+                    repositorio.guardar(
+                        tipo = tipoSeleccionado,
+                        ubicacion = ubicacion.trim(),
+                        descripcion = descripcion.trim(),
+                    )
+                    ubicacion = ""
+                    descripcion = ""
+                    tipoSeleccionado = TIPOS_REPORTE.first()
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Reporte guardado en \"Más > Mis reportes\"")
+                    }
+                    alGuardar()
                 },
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             ) {
-                Text("Enviar reporte")
+                Text("Guardar reporte")
             }
         }
     }
