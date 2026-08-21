@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 
@@ -40,15 +41,26 @@ class RepositorioEventos(
         tipo = obj.optString("tipo"),
         titulo = obj.optString("titulo"),
         lugar = obj.optStringOrNull("lugar"),
+        pais = obj.optStringOrNull("pais"),
+        paises = obj.optListaDeTextos("paises"),
         fechaEvento = obj.optStringOrNull("fecha_evento"),
-        magnitud = if (obj.has("magnitud") && !obj.isNull("magnitud")) obj.optDouble("magnitud") else null,
+        magnitud = obj.optDoubleOrNull("magnitud"),
         unidadMagnitud = obj.optStringOrNull("unidad_magnitud"),
         nivelAlerta = obj.optStringOrNull("nivel_alerta"),
         url = obj.optStringOrNull("url"),
-        latitud = if (obj.has("latitud") && !obj.isNull("latitud")) obj.optDouble("latitud") else null,
-        longitud = if (obj.has("longitud") && !obj.isNull("longitud")) obj.optDouble("longitud") else null,
+        latitud = obj.optDoubleOrNull("latitud"),
+        longitud = obj.optDoubleOrNull("longitud"),
+        profundidadKm = obj.optDoubleOrNull("profundidad_km"),
     )
 }
 
 private fun JSONObject.optStringOrNull(clave: String): String? =
-    if (has(clave) && !isNull(clave)) getString(clave).ifBlank { null } else null
+    if (has(clave) && !isNull(clave)) getString(clave).trim().ifBlank { null } else null
+
+private fun JSONObject.optDoubleOrNull(clave: String): Double? =
+    if (has(clave) && !isNull(clave)) optDouble(clave).takeIf { !it.isNaN() } else null
+
+private fun JSONObject.optListaDeTextos(clave: String): List<String> {
+    val arreglo: JSONArray = optJSONArray(clave) ?: return emptyList()
+    return (0 until arreglo.length()).mapNotNull { arreglo.optString(it).trim().ifBlank { null } }
+}

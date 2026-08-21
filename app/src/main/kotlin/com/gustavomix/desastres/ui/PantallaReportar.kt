@@ -26,6 +26,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.gustavomix.desastres.data.RepositorioReportes
 import com.gustavomix.desastres.data.etiquetaTipo
@@ -54,18 +55,22 @@ fun PantallaReportar(modifier: Modifier = Modifier, alGuardar: () -> Unit = {}) 
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
         ) {
             Text(
-                "Reportar incidente",
-                style = MaterialTheme.typography.titleLarge,
+                "Anotar un incidente",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = TextoPrimario,
                 modifier = Modifier.padding(bottom = 4.dp),
             )
             Text(
-                "El reporte se guarda solo en este teléfono, todavía no se envía a nadie.",
+                "Se guarda solo en tu teléfono, para que lo tengas anotado. " +
+                    "Ante una emergencia real, llamá al 110, 118 o 119.",
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(bottom = 16.dp),
+                color = TextoSecundario,
+                modifier = Modifier.padding(bottom = 20.dp),
             )
 
             ExposedDropdownMenuBox(expanded = tipoExpandido, onExpandedChange = { tipoExpandido = it }) {
