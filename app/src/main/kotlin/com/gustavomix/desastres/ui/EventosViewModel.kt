@@ -2,6 +2,7 @@ package com.gustavomix.desastres.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gustavomix.desastres.data.ConfiguracionMedia
 import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.RepositorioEventos
 import kotlinx.coroutines.CancellationException
@@ -13,7 +14,11 @@ import kotlinx.coroutines.launch
 sealed interface EstadoEventos {
     data object Cargando : EstadoEventos
     data class Error(val mensaje: String) : EstadoEventos
-    data class Listo(val generado: String, val eventos: List<Evento>) : EstadoEventos
+    data class Listo(
+        val generado: String,
+        val eventos: List<Evento>,
+        val media: ConfiguracionMedia,
+    ) : EstadoEventos
 }
 
 class EventosViewModel(
@@ -34,7 +39,7 @@ class EventosViewModel(
                 val feed = repositorio.obtenerFeed()
                 // Del más nuevo al más viejo: las fechas ISO se ordenan igual como texto.
                 val ordenados = feed.eventos.sortedByDescending { it.fechaEvento ?: "" }
-                EstadoEventos.Listo(feed.generado, ordenados)
+                EstadoEventos.Listo(feed.generado, ordenados, feed.media)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -45,4 +50,16 @@ class EventosViewModel(
 
     fun obtenerPorId(id: String): Evento? =
         (estado.value as? EstadoEventos.Listo)?.eventos?.find { it.id == id }
+
+    /**
+     * Las plantillas de imagen que publicó el feed. Antes de que cargue —y si el
+     * feed no las trae— valen las que la app trae de fábrica, así ninguna
+     * pantalla tiene que preguntarse si ya hay datos para mostrar una foto.
+     */
+    fun media(): ConfiguracionMedia =
+        (estado.value as? EstadoEventos.Listo)?.media ?: ConfiguracionMedia()
+
+    /** Todos los ids del feed, para marcarlos como vistos al prender los avisos. */
+    fun idsConocidos(): List<String> =
+        (estado.value as? EstadoEventos.Listo)?.eventos?.map { it.id }.orEmpty()
 }

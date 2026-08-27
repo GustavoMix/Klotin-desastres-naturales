@@ -92,6 +92,7 @@ fun PantallaNoticias(
                                     TarjetaEvento(
                                         evento = evento,
                                         onClick = { alVerAlerta(evento.id) },
+                                        configuracion = actual.media,
                                         modifier = Modifier.padding(bottom = 10.dp),
                                     )
                                 }

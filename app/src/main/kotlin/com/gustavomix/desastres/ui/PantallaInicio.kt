@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,10 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.gustavomix.desastres.data.ConfiguracionMedia
 import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.Severidad
 import com.gustavomix.desastres.data.horaBolivia
 import com.gustavomix.desastres.data.severidadDe
+import com.gustavomix.desastres.data.tieneFoto
 import com.gustavomix.desastres.data.tiempoRelativo
 import com.gustavomix.desastres.data.tituloEvento
 
@@ -43,6 +47,7 @@ fun PantallaInicio(
     alVerAlerta: (String) -> Unit,
     alVerTodasLasAlertas: () -> Unit,
     alVerAlertasFuertes: () -> Unit,
+    alVerFotos: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -56,6 +61,8 @@ fun PantallaInicio(
             alVerAlerta = alVerAlerta,
             alVerTodasLasAlertas = alVerTodasLasAlertas,
             alVerAlertasFuertes = alVerAlertasFuertes,
+            alVerFotos = alVerFotos,
+            configuracion = actual.media,
             modifier = modifier,
         )
     }
@@ -68,6 +75,8 @@ private fun ContenidoInicio(
     alVerAlerta: (String) -> Unit,
     alVerTodasLasAlertas: () -> Unit,
     alVerAlertasFuertes: () -> Unit,
+    alVerFotos: () -> Unit,
+    configuracion: ConfiguracionMedia,
     modifier: Modifier = Modifier,
 ) {
     val fuertes = remember(eventos) {
@@ -116,6 +125,19 @@ private fun ContenidoInicio(
             }
         }
 
+        val conFoto = eventos.filter { tieneFoto(it) }.take(10)
+        if (conFoto.isNotEmpty()) {
+            item {
+                CarruselDeFotos(
+                    eventos = conFoto,
+                    configuracion = configuracion,
+                    alVerAlerta = alVerAlerta,
+                    alVerFotos = alVerFotos,
+                    modifier = Modifier.padding(bottom = 22.dp),
+                )
+            }
+        }
+
         item {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
@@ -141,8 +163,77 @@ private fun ContenidoInicio(
             TarjetaEvento(
                 evento = evento,
                 onClick = { alVerAlerta(evento.id) },
+                configuracion = configuracion,
                 modifier = Modifier.padding(bottom = 10.dp),
             )
+        }
+    }
+}
+
+/**
+ * Las fotos satelitales de lo último, en fila.
+ *
+ * Es lo primero que se ve después del banner por una razón: una lista de texto
+ * no transmite que un incendio se comió medio valle. La foto sí, y de un vistazo.
+ */
+@Composable
+private fun CarruselDeFotos(
+    eventos: List<Evento>,
+    configuracion: ConfiguracionMedia,
+    alVerAlerta: (String) -> Unit,
+    alVerFotos: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "Desde el satélite",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = TextoPrimario,
+            )
+            Text(
+                "Ver todas",
+                style = MaterialTheme.typography.labelLarge,
+                color = AzulAcento,
+                modifier = Modifier.clickable(onClick = alVerFotos),
+            )
+        }
+
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(eventos, key = { it.id }) { evento ->
+                Column(modifier = Modifier.width(160.dp)) {
+                    FotoSatelital(
+                        evento = evento,
+                        configuracion = configuracion,
+                        ancho = 384,
+                        // A 160 dp el sello animado taparía la foto entera.
+                        conSello = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clickable { alVerAlerta(evento.id) },
+                    )
+                    Text(
+                        tituloEvento(evento),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextoPrimario,
+                        maxLines = 2,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                    tiempoRelativo(evento.fechaEvento)?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextoSecundario,
+                        )
+                    }
+                }
+            }
         }
     }
 }

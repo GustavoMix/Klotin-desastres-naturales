@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.gustavomix.desastres.data.ConfiguracionMedia
 import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.Severidad
 import com.gustavomix.desastres.data.etiquetaTipo
@@ -70,7 +71,8 @@ fun PantallaMapa(
     when (val actual = estado) {
         is EstadoEventos.Cargando -> EstadoCargando(modifier)
         is EstadoEventos.Error -> EstadoError(actual.mensaje, { viewModel.cargar() }, modifier)
-        is EstadoEventos.Listo -> ContenidoMapa(actual.eventos, alVerAlerta, modifier)
+        is EstadoEventos.Listo ->
+            ContenidoMapa(actual.eventos, actual.media, alVerAlerta, modifier)
     }
 }
 
@@ -78,6 +80,7 @@ fun PantallaMapa(
 @Composable
 private fun ContenidoMapa(
     eventos: List<Evento>,
+    configuracion: ConfiguracionMedia,
     alVerAlerta: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -178,6 +181,7 @@ private fun ContenidoMapa(
             TarjetaEvento(
                 evento = elegido,
                 onClick = { alVerAlerta(elegido.id) },
+                configuracion = configuracion,
                 modifier = Modifier.padding(top = 12.dp),
             )
         } else {
@@ -237,6 +241,10 @@ private fun Lienzo(
     val desplazamientoActual by rememberUpdatedState(desplazamiento)
     val tamanioActual by rememberUpdatedState(tamanio)
 
+    // Se guarda el State y se lo lee recién adentro del `Canvas`: así cada
+    // fotograma reejecuta solo el dibujo, no toda la composición del mapa.
+    val pulso = recordarPulso()
+
     Box(
         modifier = modifier
             .heightIn(min = 200.dp)
@@ -294,19 +302,39 @@ private fun Lienzo(
             }
 
             val radio = 4.5.dp.toPx()
+            val fase = pulso.value
+            val radioOnda = 26.dp.toPx()
+            val grosorOnda = 1.5.dp.toPx()
+
             eventos.forEach { evento ->
                 val lat = evento.latitud ?: return@forEach
                 val lon = evento.longitud ?: return@forEach
                 val cx = vista.x(lon)
                 val cy = vista.y(lat)
-                if (cx < -radio || cy < -radio || cx > size.width + radio || cy > size.height + radio) {
+                // El margen del descarte usa el radio de la onda, no el del punto:
+                // con el del punto, un evento apenas afuera del borde recortaría
+                // sus anillos de golpe a mitad de camino.
+                if (cx < -radioOnda || cy < -radioOnda ||
+                    cx > size.width + radioOnda || cy > size.height + radioOnda
+                ) {
                     return@forEach
                 }
-                drawCircle(
-                    color = colorDeSeveridad(severidadDe(evento)),
-                    radius = radio,
-                    center = Offset(cx, cy),
-                )
+
+                val severidad = severidadDe(evento)
+                val color = colorDeSeveridad(severidad)
+                val centro = Offset(cx, cy)
+
+                // Solo lo fuerte se anima. Si latieran los 1.357 puntos, el mapa
+                // sería una pantalla temblando y no se distinguiría nada.
+                if (seAnima(severidad)) {
+                    if (evento.tipo == "ciclon") {
+                        dibujarEspiral(centro, radioOnda * 0.7f, color, fase, grosor = grosorOnda)
+                    } else {
+                        dibujarOndaSismica(centro, radioOnda, color, fase, grosor = grosorOnda)
+                    }
+                }
+
+                drawCircle(color = color, radius = radio, center = centro)
             }
 
             seleccionado?.let { evento ->

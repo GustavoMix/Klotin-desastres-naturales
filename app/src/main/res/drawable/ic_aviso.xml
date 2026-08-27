@@ -1,0 +1,13 @@
+<!-- Ícono de la barra de estado. Android lo pinta como silueta: tiene que ser
+     una figura blanca sobre transparente, sin color propio ni degradés, o sale
+     un cuadrado blanco. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,2L1,21h22L12,2zM13,18h-2v-2h2v2zM13,14h-2V9h2v5z" />
+</vector>

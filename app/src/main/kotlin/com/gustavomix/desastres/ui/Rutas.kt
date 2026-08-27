@@ -14,6 +14,7 @@ sealed class Ruta(val ruta: String) {
         fun con(pestania: Int) = "alertas?pestania=$pestania"
     }
     data object Mapa : Ruta("mapa")
+    data object Fotos : Ruta("fotos")
     data object Noticias : Ruta("noticias")
     data object Recursos : Ruta("recursos")
     data object Reportar : Ruta("reportar")

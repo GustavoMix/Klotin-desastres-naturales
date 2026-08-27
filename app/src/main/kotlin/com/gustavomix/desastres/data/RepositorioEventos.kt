@@ -12,7 +12,7 @@ private const val URL_FEED =
     "https://cdn.jsdelivr.net/gh/GustavoMix/cron-desastres-naturales@main/datos/recientes.json"
 
 class RepositorioEventos(
-    private val cliente: OkHttpClient = OkHttpClient(),
+    private val cliente: OkHttpClient = Red.cliente(),
 ) {
     suspend fun obtenerFeed(): Feed = withContext(Dispatchers.IO) {
         val peticion = Request.Builder().url(URL_FEED).build()
@@ -32,6 +32,7 @@ class RepositorioEventos(
             generado = raiz.optString("generado"),
             total = raiz.optInt("total", eventos.length()),
             eventos = (0 until eventos.length()).map { parsearEvento(eventos.getJSONObject(it)) },
+            media = parsearConfiguracionMedia(raiz.optJSONObject("media")),
         )
     }
 
@@ -51,7 +52,62 @@ class RepositorioEventos(
         latitud = obj.optDoubleOrNull("latitud"),
         longitud = obj.optDoubleOrNull("longitud"),
         profundidadKm = obj.optDoubleOrNull("profundidad_km"),
+        media = parsearMediaEvento(obj.optJSONObject("media")),
     )
+
+    private fun parsearMediaEvento(obj: JSONObject?): MediaEvento? {
+        if (obj == null) return null
+        val recursos = obj.optJSONArray("recursos")?.let { arreglo ->
+            (0 until arreglo.length()).mapNotNull { indice ->
+                val recurso = arreglo.optJSONObject(indice) ?: return@mapNotNull null
+                val url = recurso.optStringOrNull("url") ?: return@mapNotNull null
+                ImagenFuente(url, recurso.optStringOrNull("titulo"))
+            }
+        }.orEmpty()
+
+        val media = MediaEvento(
+            icono = obj.optStringOrNull("icono"),
+            mapa = obj.optStringOrNull("mapa"),
+            recursos = recursos,
+        )
+        // Un media todo vacío es ruido: se prefiere null para que el resto del
+        // código pregunte una sola cosa.
+        return if (media.icono == null && media.mapa == null && recursos.isEmpty()) null else media
+    }
+
+    /**
+     * El feed manda sobre las plantillas de imagen; cada campo que falte cae en el
+     * valor que trae la app. Así el cron puede cambiar de capa satelital o de
+     * proveedor sin esperar a que la gente actualice el APK, y una app vieja frente
+     * a un feed nuevo (o al revés) sigue mostrando fotos.
+     */
+    private fun parsearConfiguracionMedia(obj: JSONObject?): ConfiguracionMedia {
+        if (obj == null) return ConfiguracionMedia()
+        val porDefecto = ConfiguracionMedia()
+        val satelite = obj.optJSONObject("satelite")
+        val videos = obj.optJSONObject("videos")
+
+        val grados = satelite?.optJSONObject("grados_por_tipo")?.let { objeto ->
+            objeto.keys().asSequence().mapNotNull { clave ->
+                val valor = objeto.optDouble(clave)
+                if (valor.isNaN()) null else clave to valor
+            }.toMap()
+        }.orEmpty().ifEmpty { porDefecto.gradosPorTipo }
+
+        return ConfiguracionMedia(
+            plantillaSatelite = satelite?.optStringOrNull("plantilla")
+                ?: porDefecto.plantillaSatelite,
+            capa = satelite?.optStringOrNull("capa") ?: porDefecto.capa,
+            credito = satelite?.optStringOrNull("credito") ?: porDefecto.credito,
+            gradosPorTipo = grados,
+            gradosPorDefecto = satelite?.optDoubleOrNull("grados_por_defecto")
+                ?: porDefecto.gradosPorDefecto,
+            diasTimelapse = satelite?.optDoubleOrNull("dias_timelapse")?.toInt()
+                ?: porDefecto.diasTimelapse,
+            plantillaBusquedaVideos = videos?.optStringOrNull("plantilla_busqueda")
+                ?: porDefecto.plantillaBusquedaVideos,
+        )
+    }
 }
 
 private fun JSONObject.optStringOrNull(clave: String): String? =

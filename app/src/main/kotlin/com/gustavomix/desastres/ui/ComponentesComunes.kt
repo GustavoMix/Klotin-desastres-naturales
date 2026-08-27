@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.gustavomix.desastres.data.ConfiguracionMedia
 import com.gustavomix.desastres.data.Evento
 import com.gustavomix.desastres.data.Severidad
 import com.gustavomix.desastres.data.horaBolivia
@@ -102,9 +103,18 @@ fun PuntoSeveridad(severidad: Severidad, modifier: Modifier = Modifier) {
 /**
  * Tarjeta de un evento: primero cuándo pasó, después qué pasó y dónde.
  * La hora siempre es la de Bolivia.
+ *
+ * La miniatura satelital de la derecha usa las plantillas del feed cuando quien
+ * llama las tiene a mano; con las de fábrica la foto igual sale, así que el
+ * parámetro tiene default y ninguna pantalla queda obligada a pasarlas.
  */
 @Composable
-fun TarjetaEvento(evento: Evento, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun TarjetaEvento(
+    evento: Evento,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    configuracion: ConfiguracionMedia = ConfiguracionMedia(),
+) {
     val severidad = severidadDe(evento)
     val color = colorDeSeveridad(severidad)
 
@@ -166,6 +176,13 @@ fun TarjetaEvento(evento: Evento, onClick: () -> Unit, modifier: Modifier = Modi
 
                 InsigniaSeveridad(severidad, modifier = Modifier.padding(top = 10.dp))
             }
+
+            MiniaturaSatelital(
+                evento = evento,
+                configuracion = configuracion,
+                lado = 64,
+                modifier = Modifier.padding(start = 12.dp),
+            )
         }
     }
 }

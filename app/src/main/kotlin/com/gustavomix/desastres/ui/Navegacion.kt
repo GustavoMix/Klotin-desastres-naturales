@@ -10,6 +10,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -22,8 +23,20 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 
 @Composable
-fun Navegacion(viewModel: EventosViewModel) {
+fun Navegacion(
+    viewModel: EventosViewModel,
+    eventoPedido: String? = null,
+    alAbrirEventoPedido: () -> Unit = {},
+) {
     val navController = rememberNavController()
+
+    // Alguien tocó una notificación: se abre ese evento. El aviso se consume una
+    // sola vez para que al volver atrás la pantalla no se reabra sola.
+    LaunchedEffect(eventoPedido) {
+        val id = eventoPedido ?: return@LaunchedEffect
+        navController.navigate(Ruta.AlertaDetalle.con(id))
+        alAbrirEventoPedido()
+    }
 
     Scaffold(
         bottomBar = {
@@ -63,6 +76,7 @@ fun Navegacion(viewModel: EventosViewModel) {
                     alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
                     alVerTodasLasAlertas = { navController.navigate(Ruta.Alertas.con(0)) },
                     alVerAlertasFuertes = { navController.navigate(Ruta.Alertas.con(1)) },
+                    alVerFotos = { navController.navigate(Ruta.Fotos.ruta) },
                 )
             }
             composable(
@@ -86,6 +100,13 @@ fun Navegacion(viewModel: EventosViewModel) {
                     alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
                 )
             }
+            composable(Ruta.Fotos.ruta) {
+                PantallaFotos(
+                    viewModel = viewModel,
+                    alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
+                    alVolver = { navController.popBackStack() },
+                )
+            }
             composable(Ruta.Noticias.ruta) {
                 PantallaNoticias(
                     viewModel = viewModel,
@@ -99,7 +120,11 @@ fun Navegacion(viewModel: EventosViewModel) {
                 PantallaReportar(alGuardar = { navController.popBackStack() })
             }
             composable(Ruta.Mas.ruta) { entrada ->
-                PantallaMas(senialRecarga = entrada.id)
+                PantallaMas(
+                    senialRecarga = entrada.id,
+                    idsConocidos = viewModel::idsConocidos,
+                    alVerFotos = { navController.navigate(Ruta.Fotos.ruta) },
+                )
             }
             composable(
                 route = Ruta.AlertaDetalle.ruta,
@@ -108,6 +133,7 @@ fun Navegacion(viewModel: EventosViewModel) {
                 val id = entrada.arguments?.getString("id")
                 PantallaAlertaDetalle(
                     evento = id?.let { viewModel.obtenerPorId(it) },
+                    configuracion = viewModel.media(),
                     alVolver = { navController.popBackStack() },
                 )
             }
