@@ -51,6 +51,26 @@ El botón de videos abre una **búsqueda** en YouTube y así está etiquetado: n
 existe ninguna fuente pública que publique video por evento, y presentarlo como
 si lo fuera sería mentirle a alguien que quiere saber qué pasó.
 
+## Noticias
+
+Las fuentes de eventos informan el fenómeno físico; ninguna cuenta **qué pasó**.
+Eso lo ponen los medios, y el scraper lo busca aparte y lo publica en
+`noticias.json`, agrupado por `id_agrupado` del evento (no por `id`: GDACS
+republica un ciclón por episodios y colgar las notas del episodio las
+fragmentaría entre veinte registros del mismo fenómeno).
+
+La app lo pide en un `ViewModel` separado y **recién cuando alguien entra a una
+pantalla que las muestra**: quien abre la app para ver el mapa no tiene por qué
+bajar los artículos de cuarenta eventos.
+
+Un 404 en `noticias.json` es un caso normal, no un error: el archivo aparece
+recién después de la primera corrida del scraper que busque noticias. La app lo
+trata como "todavía no hay" y lo explica, en vez de decir que falló la descarga.
+
+Las notas que son video (YouTube, Vimeo) llegan marcadas y se muestran con el
+ícono de play, con un filtro "Solo videos" en la pantalla de Noticias. Audio no
+hay: ninguna fuente pública publica audio por evento.
+
 ## Mapa
 
 El mapa se dibuja con Canvas en proyección equirectangular, a partir de los

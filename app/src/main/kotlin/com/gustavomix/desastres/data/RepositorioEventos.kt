@@ -38,6 +38,8 @@ class RepositorioEventos(
 
     private fun parsearEvento(obj: JSONObject): Evento = Evento(
         id = obj.getString("id"),
+        // Los feeds viejos no lo traen; ahí el evento es su propio grupo.
+        idAgrupado = obj.optStringOrNull("id_agrupado") ?: obj.getString("id"),
         fuente = obj.optString("fuente"),
         tipo = obj.optString("tipo"),
         titulo = obj.optString("titulo"),

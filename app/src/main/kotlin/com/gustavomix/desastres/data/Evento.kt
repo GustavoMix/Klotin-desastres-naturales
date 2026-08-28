@@ -2,6 +2,13 @@ package com.gustavomix.desastres.data
 
 data class Evento(
     val id: String,
+    /**
+     * El fenómeno del mundo real, sin el episodio que GDACS le agrega a cada
+     * republicación. Es la clave por la que vienen agrupadas las noticias: si se
+     * usara `id`, un ciclón de cinco días repartiría sus notas entre veinte
+     * "eventos" distintos.
+     */
+    val idAgrupado: String,
     val fuente: String,
     val tipo: String,
     val titulo: String,

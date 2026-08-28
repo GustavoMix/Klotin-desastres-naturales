@@ -40,6 +40,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -82,10 +83,12 @@ private const val MS_POR_FOTOGRAMA = 1100L
 fun PantallaAlertaDetalle(
     evento: Evento?,
     configuracion: ConfiguracionMedia,
+    noticiasViewModel: NoticiasViewModel,
     alVolver: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val contexto = LocalContext.current
+    LaunchedEffect(Unit) { noticiasViewModel.cargarSiHaceFalta() }
 
     Scaffold(
         modifier = modifier,
@@ -191,6 +194,12 @@ fun PantallaAlertaDetalle(
                     modifier = Modifier.padding(top = 18.dp),
                 )
 
+                QueDijeronLosMedios(
+                    evento = evento,
+                    noticiasViewModel = noticiasViewModel,
+                    modifier = Modifier.padding(top = 22.dp),
+                )
+
                 HorizontalDivider(
                     color = BordeSuave,
                     modifier = Modifier.padding(vertical = 18.dp),
@@ -217,7 +226,7 @@ fun PantallaAlertaDetalle(
 
                 evento.url?.let { url ->
                     Button(
-                        onClick = { abrir(contexto, url) },
+                        onClick = { abrirEnNavegador(contexto, url) },
                         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
                     ) {
                         Text("Ver el reporte original")
@@ -226,7 +235,7 @@ fun PantallaAlertaDetalle(
 
                 urlBusquedaVideos(evento, configuracion)?.let { url ->
                     OutlinedButton(
-                        onClick = { abrir(contexto, url) },
+                        onClick = { abrirEnNavegador(contexto, url) },
                         modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                     ) {
                         Icon(Icons.Filled.OndemandVideo, contentDescription = null)
@@ -328,6 +337,54 @@ private fun DesdeElSatelite(
     }
 }
 
+/**
+ * Qué escribieron los medios sobre este evento.
+ *
+ * Es la parte que el organismo sísmico no puede dar: si hubo heridos, cómo se
+ * vio desde la calle, qué se cayó. Si no hay notas, la sección no se dibuja: un
+ * encabezado vacío hace pensar que algo falló.
+ */
+@Composable
+private fun QueDijeronLosMedios(
+    evento: Evento,
+    noticiasViewModel: NoticiasViewModel,
+    modifier: Modifier = Modifier,
+) {
+    val estado by noticiasViewModel.estado.collectAsState()
+    val noticias = (estado as? EstadoNoticias.Listo)?.feed?.para(evento.idAgrupado).orEmpty()
+    if (noticias.isEmpty()) return
+
+    val videos = noticias.count { it.esVideo }
+
+    Column(modifier = modifier) {
+        Text(
+            "Qué dijeron los medios",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = TextoPrimario,
+        )
+        Text(
+            if (videos > 0) {
+                "${noticias.size} notas de prensa, $videos con video. Se abren en el navegador."
+            } else {
+                "${noticias.size} notas de prensa. Se abren en el navegador."
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = TextoSecundario,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(top = 12.dp),
+        ) {
+            items(noticias, key = { it.url }) { noticia ->
+                TarjetaNoticiaCompacta(noticia)
+            }
+        }
+    }
+}
+
 /** Los mapas que publica la propia fuente. Hoy solo los manda GDACS. */
 @Composable
 private fun MapasDeLaFuente(evento: Evento, modifier: Modifier = Modifier) {
@@ -361,17 +418,11 @@ private fun MapasDeLaFuente(evento: Evento, modifier: Modifier = Modifier) {
             }
         }
         FilledTonalButton(
-            onClick = { imagenes.firstOrNull()?.let { abrir(contexto, it.url) } },
+            onClick = { imagenes.firstOrNull()?.let { abrirEnNavegador(contexto, it.url) } },
             modifier = Modifier.padding(top = 10.dp),
         ) {
             Text("Abrir el mapa en grande")
         }
-    }
-}
-
-private fun abrir(contexto: android.content.Context, url: String) {
-    runCatching {
-        contexto.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)))
     }
 }
 

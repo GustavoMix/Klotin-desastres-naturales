@@ -25,6 +25,7 @@ import androidx.navigation.navArgument
 @Composable
 fun Navegacion(
     viewModel: EventosViewModel,
+    noticiasViewModel: NoticiasViewModel,
     eventoPedido: String? = null,
     alAbrirEventoPedido: () -> Unit = {},
 ) {
@@ -108,10 +109,7 @@ fun Navegacion(
                 )
             }
             composable(Ruta.Noticias.ruta) {
-                PantallaNoticias(
-                    viewModel = viewModel,
-                    alVerAlerta = { id -> navController.navigate(Ruta.AlertaDetalle.con(id)) },
-                )
+                PantallaNoticias(noticiasViewModel = noticiasViewModel)
             }
             composable(Ruta.Recursos.ruta) {
                 PantallaRecursos()
@@ -134,6 +132,7 @@ fun Navegacion(
                 PantallaAlertaDetalle(
                     evento = id?.let { viewModel.obtenerPorId(it) },
                     configuracion = viewModel.media(),
+                    noticiasViewModel = noticiasViewModel,
                     alVolver = { navController.popBackStack() },
                 )
             }

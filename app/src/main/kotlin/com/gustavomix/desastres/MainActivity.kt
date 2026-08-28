@@ -10,11 +10,16 @@ import androidx.compose.runtime.mutableStateOf
 import com.gustavomix.desastres.avisos.EXTRA_EVENTO
 import com.gustavomix.desastres.ui.EventosViewModel
 import com.gustavomix.desastres.ui.Navegacion
+import com.gustavomix.desastres.ui.NoticiasViewModel
 import com.gustavomix.desastres.ui.TemaDesastres
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: EventosViewModel by viewModels()
+
+    // Aparte del de eventos porque carga aparte: las noticias se piden recién
+    // cuando alguien entra a una pantalla que las muestra.
+    private val noticiasViewModel: NoticiasViewModel by viewModels()
 
     /**
      * Evento que pidió abrir una notificación.
@@ -34,6 +39,7 @@ class MainActivity : ComponentActivity() {
             TemaDesastres {
                 Navegacion(
                     viewModel = viewModel,
+                    noticiasViewModel = noticiasViewModel,
                     eventoPedido = eventoPedido.value,
                     alAbrirEventoPedido = { eventoPedido.value = null },
                 )
